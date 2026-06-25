@@ -1,0 +1,50 @@
+###############################################################################
+# renew — long-running, self-scheduling deployment sync.
+#
+# Unlike a systemd timer + oneshot setup, the daemon does its OWN cron-style
+# scheduling internally, so there is no .timer unit. systemd's only job here is
+# to keep the process alive (Restart=always) — that is the outer self-healing
+# loop; the daemon itself handles per-tick failures and config hot-reload.
+#
+# The .deb (see packaging/build-deb.sh) installs this unit to
+# /lib/systemd/system/ and the binary to /usr/bin/. After installing, configure
+# and activate:
+#   sudo mkdir -p /etc/renew
+#   sudo cp /usr/share/doc/renew/renew.example.json /etc/renew/renew.json
+#   sudo $EDITOR /etc/renew/renew.json
+#   sudo systemctl enable --now renew
+#
+# Logs:
+#   journalctl -u renew.service -f
+###############################################################################
+[Unit]
+Description=renew — self-healing deployment daemon
+Documentation=https://github.com/hyperiondb/renew
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/renew run --config /etc/renew/renew.json
+Environment=RUST_LOG=info
+
+# Restart the daemon if it ever exits — the supervisor half of self-healing.
+Restart=always
+RestartSec=5
+
+# Run as the user that owns the git clone and is in the `docker` group.
+User=devops
+# ProtectHome=read-only blocks reading ~/repo when the clone lives under $HOME;
+# set to false (or move the clone outside $HOME) if REPO_DIR is under /home.
+ProtectHome=false
+
+# Hardening
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

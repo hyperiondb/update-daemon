@@ -1,0 +1,54 @@
+{
+  "repo": {
+    "dir": ".",
+    "remote": "origin",
+    "branch": "main"
+  },
+  "state_dir": ".renew",
+  "run_on_start": true,
+  "log_format": "text",
+
+  "defaults": {
+    "schedule": "*/3 * * * *",
+    "env_file": ".env",
+    "clean_script": "clean.sh"
+  },
+
+  "services": [
+    {
+      "name": "backend-1",
+      "compose_files": ["docker-compose1.yml"],
+      "schedule": "*/3 * * * *",
+      "health": {
+        "local_url": "http://127.0.0.1:3010/",
+        "peer_urls": [
+          "http://10.98.0.2:3010/",
+          "http://10.98.0.3:3010/",
+          "http://10.98.0.4:3010/"
+        ],
+        "peers_required": 2,
+        "timeout_secs": 5
+      }
+    },
+    {
+      "name": "backend-2",
+      "compose_files": ["docker-compose2.yml"],
+      "schedule": "1-59/3 * * * *",
+      "health": {
+        "local_url": "http://127.0.0.1:3020/",
+        "peer_urls": [
+          "http://10.98.0.2:3010/",
+          "http://10.98.0.3:3010/",
+          "http://10.98.0.4:3010/"
+        ],
+        "peers_required": 2
+      }
+    },
+    {
+      "name": "web",
+      "compose_files": ["docker-compose-web.yml"],
+      "schedule": "@every 5m",
+      "env_file": ".env.web"
+    }
+  ]
+}

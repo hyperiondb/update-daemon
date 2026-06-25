@@ -1,0 +1,36 @@
+[package]
+name = "renew"
+description = "Self-healing deployment daemon: one JSON config drives cron-scheduled git pull + docker compose drift reconciliation across services"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+testkit = []
+
+[[bin]]
+name = "renew"
+path = "src/main.rs"
+
+[[bin]]
+name = "mockdocker"
+path = "src/bin/mock_docker.rs"
+required-features = ["testkit"]
+
+[dependencies]
+renew-core.workspace = true
+tokio.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+time.workspace = true
+async-trait.workspace = true
